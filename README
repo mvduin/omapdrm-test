@@ -1,0 +1,9 @@
+This test expects the patches at:
+	https://github.com/mvduin/linux/commits/work/omapdrm/memtype
+
+(merge/rebase/cherry-pick to your favorite 4.7 kernel for omap5)
+
+Also do this:
+	echo 44000000.ocp >/sys/bus/platform/drivers/omap_l3_noc/unbind
+	echo 4 >/proc/cpu/alignment
+to keep bus errors from escalating to traceback-in-kernel-log-inducing fun.
