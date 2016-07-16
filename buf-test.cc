@@ -12,9 +12,9 @@
 #include "omapdrm.h"
 #include "die.h"
 
-using u8  = __u8;
-using u16 = __u16;
-using u32 = __u32;
+using u8  = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
 
 enum class MemType {
 	cached	= 0,  // not supported yet
@@ -183,8 +183,9 @@ static void timeit( u8 *p, uint n, void (*proc)( u8 *, uint ) )
 		proc( p, n*2 );
 		u32 t3 = now();
 		t = (t3 - t2) - (t2 - t);
-		printf( "%6.1f MB/s\n", n * 16e6 / t );
+		printf( "\t%6.1f MB/s", n * 16e6 / t );
 	}
+	printf( "\n" );
 }
 
 static void buffer_test( int fd, MemType mt, bool tiled )
@@ -196,14 +197,14 @@ static void buffer_test( int fd, MemType mt, bool tiled )
 
 	printf( "---- %stiled (%s) ----\n",
 			tiled ? "" : "non-", mtname[(uint)mt / 2] );
-	printf( "fill u32:\n" );	timeit( p, 4, fill_test<u32> );
-	printf( "fill u32x4:\n" );	timeit( p, 4, fill_test<uint32x4_t> );
-	printf( "fill u32x4x4:\n" );	timeit( p, 4, fill_test<uint32x4x4_t> );
+	printf( "fill (str):" );	timeit( p, 2, fill_test<u32> );
+	printf( "fill (vst1):" );	timeit( p, 2, fill_test<uint32x4_t> );
+	printf( "fill (vstm):" );	timeit( p, 2, fill_test<uint32x4x4_t> );
 	if( tiled && mt == MemType::normal )
 		return;  // let's not do bus errors
-	printf( "read u32:\n" );	timeit( p, 2, read_test<u32> );
-	printf( "read u32x4:\n" );	timeit( p, 2, read_test<uint32x4_t> );
-	printf( "read u32x4x4:\n" );	timeit( p, 2, read_test<uint32x4x4_t> );
+	printf( "read (ldr):" );	timeit( p, 1, read_test<u32> );
+	printf( "read (vld1):" );	timeit( p, 1, read_test<uint32x4_t> );
+	printf( "read (vldm):" );	timeit( p, 1, read_test<uint32x4x4_t> );
 };
 
 int main( int argc, char **argv )

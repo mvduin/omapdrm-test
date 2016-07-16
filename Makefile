@@ -6,7 +6,7 @@ clean ::
 	$(RM) ${programs}
 
 # common DRI utils
-${programs}: %: %.o omapdrm.o
+${programs}: %: %.cc omapdrm.cc
 
 
 # all packages
