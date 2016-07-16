@@ -16,6 +16,10 @@ using u8  = uint8_t;
 using u16 = uint16_t;
 using u32 = uint32_t;
 
+#ifndef OMAP_BO_FORCE
+#define OMAP_BO_FORCE 0x10
+#endif
+
 enum class MemType {
 	cached	= 0,  // not supported yet
 	normal	= 2,
@@ -49,7 +53,7 @@ struct Buffer {
 		free();
 
 		struct omap_device *dev = omap_device_new(fd);
-		u32 flags = (u32)mt | OMAP_BO_SCANOUT;
+		u32 flags = (u32)mt | OMAP_BO_FORCE;
 		if( tiled ) {
 			if( bpp == 1 )
 				flags |= OMAP_BO_TILED_8;

@@ -1,5 +1,5 @@
-This test expects the patches at:
-	https://github.com/mvduin/linux/commits/work/omapdrm/memtype
+This test expects the two patches at:
+	https://github.com/mvduin/linux/commits/patch/tiler-memtype
 
 (merge/rebase/cherry-pick to your favorite 4.7 kernel for omap5)
 
