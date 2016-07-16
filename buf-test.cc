@@ -9,10 +9,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <arm_neon.h>
-#include <xf86drmMode.h>
-extern "C" {
-#include <omap_drmif.h>
-}
+#include "omapdrm.h"
 #include "die.h"
 
 using u8  = __u8;
@@ -98,28 +95,6 @@ struct Buffer {
 		return base + offset;
 	}
 };
-
-
-int omapdrm_open()
-{
-	// "The whole drmOpen thing is a fiasco and we need to find a way back
-	// to just using open(2)." -- libdrm/xf86.c
-	//
-	// Use udev!
-	//
-	int fd = open( "/dev/gpu/omap/card", O_RDWR | O_CLOEXEC );
-	if( fd < 0 ) {
-		int err = -errno;
-		if( err == -ENOENT ) {
-			die( "Please copy gpu-omap.rules to /etc/udev/rules.d/"
- 				" and run:\n"
-				"\tudevadm trigger /dev/dri/* /dev/fb*\n" );
-		}
-		die( "open /dev/gpu/omap/card: (%d) %m\n", err );
-	}
-
-	return fd;
-}
 
 [[gnu::noinline]]
 static u32 now() {

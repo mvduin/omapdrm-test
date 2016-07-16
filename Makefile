@@ -6,11 +6,11 @@ clean ::
 	$(RM) ${programs}
 
 # common DRI utils
-${programs}: %: %.o
+${programs}: %: %.o omapdrm.o
 
 
 # all packages
-declared_pkgs := libdrm libdrm_omap
+declared_pkgs := libdrm libdrm_omap libudev
 
 # default packages
 pkgs = ${declared_pkgs}
