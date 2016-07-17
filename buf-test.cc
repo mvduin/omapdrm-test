@@ -112,9 +112,9 @@ static void run_fills( int fd, MemType mt, bool tiled )
 
 	printf( "\n---- %stiled (%s) ----\n",
 			tiled ? "" : "non-", mtname[(uint)mt / 2] );
-	printf( "fill (str):" );	timeit( p, 2, fill_test<u32> );
-	printf( "fill (vst1q):" );	timeit( p, 2, fill_test<uint32x4_t> );
-	printf( "fill (vstmqq):" );	timeit( p, 2, fill_test<uint32x4x4_t> );
+	printf( "write (str):" );	timeit( p, 2, fill_test<u32> );
+	printf( "write (vst1q):" );	timeit( p, 2, fill_test<uint32x4_t> );
+	printf( "write (vstmqq):" );	timeit( p, 2, fill_test<uint32x4x4_t> );
 };
 
 static void run_reads( int fd, MemType mt, bool tiled )
@@ -137,10 +137,12 @@ int main( int argc, char **argv )
 	// note: MemType::sync is pointlessly slow and the option is invalid on
 	// mainline linux (although there MemType::device actually gets you sync)
 
-	printf( "================ fill tests ================================\n\n" );
+	printf( "================ write tests ===============================\n\n" );
 	printf( "reference points:\n" );
-	printf( "\t1280 x  720 x 32-bit x 60 fps = 211 MB/s\n" );
-	printf( "\t1920 x 1080 x 32-bit x 60 fps = 475 MB/s\n" );
+	printf( "\t1280 x  720 x 32-bit x 60 fps =  211 MB/s\n" );
+	printf( "\t1920 x 1080 x 32-bit x 60 fps =  475 MB/s\n" );
+	printf( "\traw bandwidth to L3 intercon  = 2021 MB/s (per direction)\n" );
+	printf( "\traw bandwidth DDR3 memory     = 4066 MB/s\n" );
 //	run_fills( fd, MemType::sync,   false );
 //	run_fills( fd, MemType::sync,   true );
 	run_fills( fd, MemType::device, false );
