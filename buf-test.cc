@@ -115,47 +115,39 @@ static char const *const mtname[4] = {
 };
 
 template< typename T >
-inline T read_once( T volatile &obj ) {  return obj;  }
-
-template< typename T >
-inline void write_once( T volatile &obj, T value ) {  obj = value;  }
-
-// this is yucky but need to make sure it uses 64-byte vldm/vstm
-template<>
-inline uint32x4x4_t read_once( uint32x4x4_t volatile &obj )
-{
-	register uint32x4_t q0 asm("q0");
-	register uint32x4_t q1 asm("q1");
-	register uint32x4_t q2 asm("q2");
-	register uint32x4_t q3 asm("q3");
-	asm volatile( "vldm %m4, { %q0,%q1,%q2,%q3 }"
-			: "=w"(q0), "=w"(q1), "=w"(q2), "=w"(q3) : "m"(obj) );
-	return { q0, q1, q2, q3 };
+inline void write_once( T &obj, T value ) {
+	obj = value;
+	asm volatile ( "" : "+m"(obj) );
 }
 
 template<>
-inline void write_once( uint32x4x4_t volatile &obj, register uint32x4x4_t v )
+inline void write_once( uint32x4_t &obj, uint32x4_t value )
 {
-#if 0
-	// this doesn't work when inlined
-	asm volatile( "vstm %m0, { %q1,%q2,%q3,%q4 }"
-		: "=m"(obj)
-		: "w"(v.val[0]), "w"(v.val[1]), "w"(v.val[2]), "w"(v.val[3]) );
-#else
-	// this works but it tends to cause pointless vmovs
-	register uint32x4_t q0 asm("q0") = v.val[0];
-	register uint32x4_t q1 asm("q1") = v.val[1];
-	register uint32x4_t q2 asm("q2") = v.val[2];
-	register uint32x4_t q3 asm("q3") = v.val[3];
-	asm volatile( "vstm %m0, { %q1,%q2,%q3,%q4 }"
-			: "=m"(obj) : "w"(q0), "w"(q1), "w"(q2), "w"(q3) );
-#endif
+	vst1q_u32( (u32 *) &obj, value );
+	asm volatile ( "" : "+m"(obj) );
+}
+
+inline void read_once( u32 &obj )
+{
+	asm volatile ( "" : "+m"(obj) );
+	asm volatile ( "" :: "r"(obj) );
+}
+
+inline void read_once( uint32x4_t &obj )
+{
+	asm volatile ( "" : "+m"(obj) );
+	asm volatile ( "" :: "w"(obj) );
+}
+
+inline void read_once( uint32x4x4_t &obj )
+{
+	asm volatile( "vldm %m0, { q0-q3 }" :: "m"(obj) : "q0", "q1", "q2", "q3" );
 }
 
 template< typename T >
 static void fill_test( u8 *p, uint n )
 {
-	auto const line = (T volatile *) p;
+	auto const line = (T *) p;
 
 	n *= 0x1000;
 
@@ -167,7 +159,7 @@ static void fill_test( u8 *p, uint n )
 template< typename T >
 static void read_test( u8 *p, uint n )
 {
-	auto const line = (T volatile *) p;
+	auto const line = (T *) p;
 
 	n *= 0x1000;
 
