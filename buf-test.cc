@@ -107,12 +107,6 @@ static u32 now() {
 	return (u32)ts.tv_sec * 1000000u + (u32)ts.tv_nsec / 1000u;
 }
 
-static char const *const mtname[4] = {
-	"cached",
-	"normal",
-	"device",
-	"sync",
-};
 
 template< typename T >
 inline void write_once( T &obj, T value ) {
@@ -184,38 +178,65 @@ static void timeit( u8 *p, uint n, void (*proc)( u8 *, uint ) )
 	printf( "\n" );
 }
 
-static void buffer_test( int fd, MemType mt, bool tiled )
+static char const *const mtname[4] = {
+	"cached",
+	"normal",
+	"device",
+	"sync",
+};
+
+static void run_fills( int fd, MemType mt, bool tiled )
 {
 	Buffer buf { 1280, 720, 4 };
 	buf.allocate( fd, mt, tiled );
-
 	u8 *const p = buf.map();
 
-	printf( "---- %stiled (%s) ----\n",
+	printf( "\n---- %stiled (%s) ----\n",
 			tiled ? "" : "non-", mtname[(uint)mt / 2] );
 	printf( "fill (str):" );	timeit( p, 2, fill_test<u32> );
-	printf( "fill (vst1):" );	timeit( p, 2, fill_test<uint32x4_t> );
-	printf( "fill (vstm):" );	timeit( p, 2, fill_test<uint32x4x4_t> );
-	if( tiled && mt == MemType::normal )
-		return;  // let's not do bus errors
+	printf( "fill (vst1q):" );	timeit( p, 2, fill_test<uint32x4_t> );
+	printf( "fill (vstmqq):" );	timeit( p, 2, fill_test<uint32x4x4_t> );
+};
+
+static void run_reads( int fd, MemType mt, bool tiled )
+{
+	Buffer buf { 1280, 720, 4 };
+	buf.allocate( fd, mt, tiled );
+	u8 *const p = buf.map();
+
+	printf( "\n---- %stiled (%s) ----\n",
+			tiled ? "" : "non-", mtname[(uint)mt / 2] );
 	printf( "read (ldr):" );	timeit( p, 1, read_test<u32> );
-	printf( "read (vld1):" );	timeit( p, 1, read_test<uint32x4_t> );
-	printf( "read (vldm):" );	timeit( p, 1, read_test<uint32x4x4_t> );
+	printf( "read (vld1q):" );	timeit( p, 1, read_test<uint32x4_t> );
+	printf( "read (vldmqq):" );	timeit( p, 1, read_test<uint32x4x4_t> );
 };
 
 int main( int argc, char **argv )
 {
 	int fd = omapdrm_open();
 
-#if 0
-	// these are just pointlessly slow
-	buffer_test( fd, MemType::sync,   false );
-	buffer_test( fd, MemType::sync,   true );
-#endif
-	buffer_test( fd, MemType::device, false );
-	buffer_test( fd, MemType::device, true );
-	buffer_test( fd, MemType::normal, false );
-	buffer_test( fd, MemType::normal, true );
+	// note: MemType::sync is pointlessly slow and the option is invalid on
+	// mainline linux (although there MemType::device actually gets you sync)
+
+	printf( "================ fill tests ================================\n\n" );
+	printf( "reference points:\n" );
+	printf( "\t1280 x  720 x 32-bit x 60 fps = 211 MB/s\n" );
+	printf( "\t1920 x 1080 x 32-bit x 60 fps = 475 MB/s\n" );
+//	run_fills( fd, MemType::sync,   false );
+//	run_fills( fd, MemType::sync,   true );
+	run_fills( fd, MemType::device, false );
+	run_fills( fd, MemType::device, true );
+	run_fills( fd, MemType::normal, false );
+	run_fills( fd, MemType::normal, true );
+
+	printf( "\n" );
+	printf( "================ read tests ================================\n\n" );
+	printf( "(of course you should try to avoid reading a framebuffer anyway)\n" );
+//	run_reads( fd, MemType::sync,   false );
+//	run_reads( fd, MemType::sync,   true );
+	run_reads( fd, MemType::device, false );
+	run_reads( fd, MemType::device, true );
+	run_reads( fd, MemType::normal, false );
 
 	close( fd );
 	return 0;

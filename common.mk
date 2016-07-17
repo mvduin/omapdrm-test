@@ -40,9 +40,11 @@ flags += -D_FILE_OFFSET_BITS=64
 flags += -Wall -Wextra
 #flags += -Werror
 flags += -Wno-unused-parameter -Wno-unused-function
+ifndef DEBUG
 flags += -O3
-#flags += -O2
-#flags += -fno-schedule-insns -fno-schedule-insns2
+else
+flags += -Og
+endif
 flags += -g
 CFLAGS = -std=gnu11 $(flags)
 CXXFLAGS = -std=gnu++1z $(flags)
