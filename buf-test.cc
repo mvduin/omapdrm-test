@@ -10,95 +10,14 @@
 #include <assert.h>
 #include <arm_neon.h>
 #include "omapdrm.h"
+#include "omapbuf.h"
 #include "die.h"
+
+using namespace drm;
 
 using u8  = uint8_t;
 using u16 = uint16_t;
 using u32 = uint32_t;
-
-#ifndef OMAP_BO_FORCE
-#define OMAP_BO_FORCE 0x10
-#endif
-
-enum class MemType {
-	cached	= 0,  // not supported yet
-	normal	= 2,
-	device	= 4,
-	sync	= 6,
-};
-
-static inline constexpr u32 round_up( u32 x, u32 m ) {
-	return x + -x % m;
-}
-
-struct Buffer {
-	u16 width;
-	u16 height;
-	u8  bpp;  // bytes, not bits
-	u16 stride = 0;
-
-	struct omap_bo *bo = NULL;
-	u32 offset = 0;
-
-	void free()
-	{
-		omap_bo_del( bo );
-		bo = NULL;
-	}
-
-	~Buffer() {  free();  }
-
-	void allocate( int fd, MemType mt, bool tiled )
-	{
-		free();
-
-		struct omap_device *dev = omap_device_new(fd);
-		u32 flags = (u32)mt | OMAP_BO_FORCE;
-		if( tiled ) {
-			if( bpp == 1 )
-				flags |= OMAP_BO_TILED_8;
-			else if( bpp == 2 )
-				flags |= OMAP_BO_TILED_16;
-			else if( bpp == 4 )
-				flags |= OMAP_BO_TILED_32;
-			else
-				die( "invalid bpp for tiled memory\n" );
-			stride = round_up( width * bpp, 4096 );
-			bo = omap_bo_new_tiled( dev, width, height, flags );
-		} else {
-			// align to 64 bytes for consistent behaviour
-			stride = round_up( width * bpp, 64 );
-			bo = omap_bo_new( dev, stride * height, flags );
-		}
-		offset = 0;
-		omap_device_del( dev );  // bo retains a reference
-		if( ! bo )
-			die( "failed to allocate buffer: (%d) %m\n", -errno );
-	}
-
-	void allocate( Buffer const *parent, u16 x, u16 y )
-	{
-		free();
-
-		stride = parent->stride;
-		bpp = parent->bpp;
-		offset = parent->offset + x * bpp + y * stride;
-		bo = omap_bo_ref( parent->bo );
-	}
-
-	u32 handle() const
-	{
-		return omap_bo_handle( bo );
-	}
-
-	u8 *map() const
-	{
-		u8 *base = (u8 *) omap_bo_map( bo );
-		if( ! base )
-			die( "failed to mmap buffer: (%d) %m\n", -errno );
-		return base + offset;
-	}
-};
 
 [[gnu::noinline]]
 static u32 now() {
