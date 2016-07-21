@@ -10,22 +10,18 @@ CROSS_COMPILE := arm-linux-gnueabihf-
 endif
 endif
 
-target-flags =
+CXX = ${CROSS_COMPILE}g++
+CC = ${CROSS_COMPILE}gcc
 
-CXX = ${CROSS_COMPILE}g++ ${target-flags}
-CC = ${CROSS_COMPILE}gcc ${target-flags}
+flags =
 
 target-arch != ${CC} -dumpmachine
 
 ifeq "${target-arch}" "arm-linux-gnueabihf"
-  target-flags += -mcpu=cortex-a15 -mfpu=neon-vfpv4 -mfloat-abi=hard -mthumb
+  flags += -mcpu=cortex-a15 -mfpu=neon-vfpv4 -mfloat-abi=hard -mthumb
 else
-  ifeq "${target-arch}" "x86_64-linux-gnu"
-    ifeq "${CROSS_COMPILE}" ""
-      target-flags += -march=native
-    endif
-  else
-    $(error "unknown target: ${target-arch}")
+  ifeq "${CROSS_COMPILE}" ""
+    flags += -march=native
   endif
 endif
 
@@ -33,7 +29,6 @@ LD = ${CXX}
 LDFLAGS =
 LDFLAGS += -z now -z relro
 LDLIBS =
-flags =
 flags += -funsigned-char
 #flags += -fno-strict-aliasing -fwrapv
 flags += -D_FILE_OFFSET_BITS=64
@@ -46,8 +41,8 @@ else
 flags += -Og
 endif
 flags += -g
-CFLAGS = -std=gnu11 $(flags)
-CXXFLAGS = -std=gnu++1z $(flags)
+CFLAGS = -std=gnu11 ${flags}
+CXXFLAGS = -std=gnu++1y ${flags}
 CXXFLAGS += -fno-operator-names
 CPPFLAGS = -I src -I include
 
