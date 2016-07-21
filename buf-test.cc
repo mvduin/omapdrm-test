@@ -85,14 +85,17 @@ static void read_test( u8 *p, uint n )
 [[gnu::noinline]]
 static void timeit( u8 *p, uint n, void (*proc)( u8 *, uint ) )
 {
-	for( uint k = 0; k < 3; k++ ) {
-		u32 t = now();
+	uint m = 4;
+	u32 t[m];
+	// hide count from optimizer
+	asm( "" : "+r"(m) :: "memory" );
+	for( uint k = 0; k < m; k++ ) {
 		proc( p, n );
-		u32 t2 = now();
-		proc( p, n*2 );
-		u32 t3 = now();
-		t = (t3 - t2) - (t2 - t);
-		printf( "\t%6.1f MB/s", n * 16e6 / t );
+		t[k] = now();
+		asm( "" ::: "memory" );
+	}
+	for( uint k = 1; k < m; k++ ) {
+		printf( "\t%6.1f MB/s", n * 16e6 / (t[k] - t[k-1]) );
 	}
 	printf( "\n" );
 }

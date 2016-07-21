@@ -41,7 +41,7 @@ flags += -Wall -Wextra
 #flags += -Werror
 flags += -Wno-unused-parameter -Wno-unused-function
 ifndef DEBUG
-flags += -O3
+flags += -Os
 else
 flags += -Og
 endif
