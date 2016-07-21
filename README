@@ -1,9 +1,18 @@
-This test expects the two patches at:
+This test is meant to evaluate the two patches at:
 	https://github.com/mvduin/linux/commits/patch/tiler-memtype
 
 (merge/rebase/cherry-pick to your favorite 4.7 kernel for omap5)
 
-Also do this:
+
+It should still run without the patches, but this causes MemType::device and
+*all* tiled memory to behave like MemType::sync.  (It is however not valid to
+explicitly select MemType::sync then since it was introduced by my patch.)
+
+
+Also recommended:
 	echo 44000000.ocp >/sys/bus/platform/drivers/omap_l3_noc/unbind
 	echo 4 >/proc/cpu/alignment
-to keep bus errors from escalating to traceback-in-kernel-log-inducing fun.
+to keep any bus errors from escalating to traceback-in-kernel-log-inducing fun.
+
+Don't forget to use cpufreq-set -rg performance or powersave to explicitly
+select cpu frequency.  Governor ondemand yields unstable results.
