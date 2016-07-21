@@ -25,6 +25,9 @@ struct Buffer {
 	struct omap_bo *bo = NULL;
 	__u32 offset = 0;
 
+	Buffer( __u16 width, __u16 height, __u8  bpp )
+		: width( width ), height( height ), bpp( bpp ) {}
+
 	void free()
 	{
 		omap_bo_del( bo );

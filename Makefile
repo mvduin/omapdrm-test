@@ -18,6 +18,7 @@ pkgs = ${declared_pkgs}
 
 include common.mk
 
+flags += -Wno-missing-field-initializers
 flags += -D_FILE_OFFSET_BITS=64
 flags += -fno-exceptions
 LDLIBS += -lstdc++
